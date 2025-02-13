@@ -6,6 +6,10 @@
 #include <vector>
 #include <SDL3_ttf/SDL_ttf.h>
 
+//own headers
+
+#include "collision.h"
+
 //global varaibles
 
 //varabile for window for the game, and rendered varaiable for drawing objects
@@ -69,9 +73,7 @@ public:
 
 std::vector<Obstacle> obstacles;
 
-bool checkCollision(SDL_FRect a, SDL_FRect b) {
-    return SDL_HasRectIntersectionFloat(&a, &b);
-}
+
 
 void update() {
     if (isJumping) {
@@ -120,7 +122,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     }
 
     if (!SDL_CreateWindowAndRenderer("Dino Game", SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer)) {
-        SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
+        SDL_Log("Couldnt create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
