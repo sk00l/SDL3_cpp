@@ -71,7 +71,64 @@ public:
     }
 };
 
-std::vector<Obstacle> obstacles;
+struct ObstacleNode {
+    Obstacle obstacle;
+    ObstacleNode* next;
+
+    ObstacleNode(float x, float y, float w, float h)
+        : obstacle(x,y,w,h), next(nullptr){}
+};
+
+class ObstacleList {
+public:
+    ObstacleNode* head;
+
+    ObstacleList() : head(nullptr) {}
+
+    void addObstacle(float x, float y, float w, float h) {
+        ObstacleNode* newNode = new ObstacleNode(x, y, w, h);
+        if (!head) {
+            head = newNode;
+        }
+        else {
+            ObstacleNode* temp = head;
+            while (temp->next) temp = temp->next;
+            temp->next = newNode;
+        }
+    }
+
+    void updateObstacles() {
+        ObstacleNode* temp = head;
+        ObstacleNode* prev = nullptr;
+
+        while (temp) {
+            temp->obstacle.update();
+
+            if (temp->obstacle.rect.x + temp->obstacle.rect.w <= 0) {
+                // Remove off-screen obstacle
+                if (prev) prev->next = temp->next;
+                else head = temp->next;
+
+                delete temp;
+                temp = (prev) ? prev->next : head;
+            }
+            else {
+                prev = temp;
+                temp = temp->next;
+            }
+        }
+    }
+
+    void render(SDL_Renderer* renderer) {
+        ObstacleNode* temp = head;
+        while (temp) {
+            temp->obstacle.render(renderer);
+            temp = temp->next;
+        }
+    }
+};
+
+ObstacleList obstacles;
 
 
 
@@ -92,22 +149,25 @@ void update() {
     if (ground1.x + SCREEN_WIDTH <= 0) ground1.x = SCREEN_WIDTH;
     if (ground2.x + SCREEN_WIDTH <= 0) ground2.x = SCREEN_WIDTH;
 
-    for (auto& obstacle : obstacles) {
-        obstacle.update();
-        if (checkCollision(dino, obstacle.rect) || checkCollision(dino, obstacle.line)) {
+    obstacles.updateObstacles();
+
+    // Collision check
+    ObstacleNode* temp = obstacles.head;
+    while (temp) {
+        if (checkCollision(dino, temp->obstacle.rect) || checkCollision(dino, temp->obstacle.line)) {
             dinoR = rand() % 256;
             dinoG = rand() % 256;
             dinoB = rand() % 256;
         }
+        temp = temp->next;
     }
 
-    for (auto& obstacle : obstacles) {
-        obstacle.update();
-        if (checkCollision(dino, obstacle.line)) {
-            dinoR = rand() % 256;
-            dinoG = rand() % 256;
-            dinoB = rand() % 256;
-        }
+    // **Add a new obstacle periodically**
+    static int frameCounter = 0;
+    frameCounter++;
+    if (frameCounter >= 100) {  // Every ~1.6 seconds
+        obstacles.addObstacle(SCREEN_WIDTH + (rand() % 100), 320, 30, 30);
+        frameCounter = 0;
     }
 }
 
@@ -127,9 +187,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     }
 
     // Create multiple obstacles
-    obstacles.emplace_back(SCREEN_WIDTH + 200, 320, 30, 30);
-    obstacles.emplace_back(SCREEN_WIDTH + 500, 320, 30, 30);
-    obstacles.emplace_back(SCREEN_WIDTH + 800, 320, 30, 30);
+    obstacles.addObstacle(SCREEN_WIDTH + 200, 320, 30, 30);
+    obstacles.addObstacle(SCREEN_WIDTH + 500, 320, 30, 30);
+    obstacles.addObstacle(SCREEN_WIDTH + 800, 320, 30, 30);
 
     return SDL_APP_CONTINUE;
 }
@@ -159,9 +219,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     SDL_RenderFillRect(renderer, &ground1);
     SDL_RenderFillRect(renderer, &ground2);
 
-    for (auto& obstacle : obstacles) {
-        obstacle.render(renderer);
-    }
+    obstacles.render(renderer);
 
     SDL_SetRenderDrawColor(renderer, dinoR, dinoG, dinoB, 255);
     SDL_RenderFillRect(renderer, &dino);

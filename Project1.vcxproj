@@ -21,10 +21,12 @@
   <ItemGroup>
     <ClCompile Include="collision.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="tiny_ttf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="collision.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="tiny_ttf.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
